@@ -9,10 +9,10 @@ import (
 )
 
 type Card struct {
-	gorm.Model
+	BaseModel
 	AccountID  string           `gorm:"notNull"`
+	PAN        types.PAN        `gorm:"primaryKey;size:16;<-:create;notNull"`
 	CardSystem types.CardSystem `gorm:"notNull"`
-	PAN        types.PAN        `gorm:"size:16;unique;<-:create;notNull"`
 	expireDate string           `gorm:"size:5;notNull"`
 }
 

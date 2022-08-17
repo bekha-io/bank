@@ -1,24 +1,11 @@
 package handlers
 
 import (
-	"banking/pkg/types"
+	"banking/internal/http/json/reqModels"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
-
-type createUserReq struct {
-	Login       string            `json:"login"`
-	Password    string            `json:"password"`
-	FirstName   string            `json:"firstName"`
-	LastName    string            `json:"lastName"`
-	MiddleName  string            `json:"middleName"`
-	PhoneNumber types.PhoneNumber `json:"phoneNumber"`
-}
-
-type refreshTokenReq struct {
-	Login    string `json:"login"`
-	Password string `json:"password"`
-}
 
 func CreateUser(c *gin.Context) {
 	var resp = JSONResp{
@@ -26,18 +13,21 @@ func CreateUser(c *gin.Context) {
 	}
 
 	// Грязный input
-	var reqBody createUserReq
+	var reqBody reqModels.CreateUser
 	if err := c.BindJSON(&reqBody); err != nil {
 		resp.Error = err.Error()
 		c.IndentedJSON(http.StatusBadRequest, resp)
+		return
 	}
 
 	// Пользователя не удалось создать
-	user, err := service.User.CreateUser(reqBody.Login, reqBody.Password, reqBody.PhoneNumber, reqBody.FirstName,
+	user, err := service.CreateUser(reqBody.Login, reqBody.Password, reqBody.PhoneNumber, reqBody.FirstName,
 		reqBody.LastName, reqBody.MiddleName)
 	if err != nil {
+		fmt.Print("!@#!@#!@# ", err.Error())
 		resp.Error = err.Error()
-		c.IndentedJSON(http.StatusInternalServerError, resp)
+		c.JSON(http.StatusBadRequest, resp)
+		return
 	}
 
 	resp.Status = RespStatusOK
@@ -51,17 +41,19 @@ func RefreshToken(c *gin.Context) {
 	}
 
 	// Грязный input
-	var reqBody refreshTokenReq
+	var reqBody reqModels.RefreshToken
 	if err := c.BindJSON(&reqBody); err != nil {
 		resp.Error = err.Error()
 		c.IndentedJSON(http.StatusBadRequest, resp)
+		return
 	}
 
 	// Сервис не может выпустить новый токен
-	accessToken, err := service.Auth.RefreshAccessToken(reqBody.Login, []byte(reqBody.Password))
+	accessToken, err := service.RefreshAccessToken(reqBody.Login, []byte(reqBody.Password))
 	if err != nil {
 		resp.Error = err.Error()
 		c.IndentedJSON(http.StatusInternalServerError, resp)
+		return
 	}
 
 	resp.Status = RespStatusOK

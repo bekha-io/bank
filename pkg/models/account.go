@@ -9,13 +9,13 @@ import (
 )
 
 type Account struct {
-	gorm.Model
-	ID       string         `gorm:"primaryKey;<-:create"`
-	UserID   string         `gorm:"<-:create"`
-	Currency types.Currency `gorm:"default:TJS"`
-	Balance  types.Money    `gorm:"default:0"`
+	BaseModel
+	ID       string         `gorm:"primaryKey;<-:create" json:"id"`
+	UserID   string         `gorm:"<-:create" json:"ownerId"`
+	Currency types.Currency `gorm:"default:TJS" json:"currency"`
+	Balance  types.Money    `gorm:"default:0" json:"balance"`
 
-	IsFrozen bool `gorm:"default:false;"`
+	IsFrozen bool `gorm:"default:false;" json:"isFrozen"`
 }
 
 // Generates a random ID

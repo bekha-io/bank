@@ -10,16 +10,16 @@ import (
 )
 
 type User struct {
-	gorm.Model
-	ID          string `gorm:"primaryKey"`
-	Login       string `gorm:"notNull"`
-	Password    []byte `gorm:"notNull"`
-	Name        string `gorm:"notNull"`
-	LastName    string `gorm:"notNull"`
-	MiddleMame  string
-	PhoneNumber types.PhoneNumber `gorm:"unique;"`
+	BaseModel
+	ID          string            `gorm:"primaryKey" json:"id"`
+	Login       string            `gorm:"notNull" json:"login"`
+	Password    []byte            `gorm:"notNull" json:"-"`
+	Name        string            `gorm:"notNull" json:"name"`
+	LastName    string            `gorm:"notNull" json:"lastName"`
+	MiddleName  string            `json:"middleName"`
+	PhoneNumber types.PhoneNumber `gorm:"unique;" json:"phoneNumber"`
 
-	AccessToken string `json:"access_token"`
+	AccessToken string `json:"-"`
 }
 
 func generateAccessToken(login string) (accessToken string) {
@@ -47,7 +47,7 @@ func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
 }
 
 func (u *User) FullName() string {
-	return u.LastName + " " + u.Name + " " + u.MiddleMame
+	return u.LastName + " " + u.Name + " " + u.MiddleName
 }
 
 func (u *User) GetAccounts() []Account {

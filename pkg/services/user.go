@@ -6,15 +6,18 @@ import (
 	"banking/pkg/types"
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 	"log"
 )
 
 type userService interface {
-	CreateUser(login string, password string,
-		phoneNumber types.PhoneNumber, firstName string, lastName string,
+	CreateUser(login string, password string, phoneNumber types.PhoneNumber, firstName string, lastName string,
 		middleName string) (user *models.User, err error)
 	GetUserByPhoneNumber(phoneNumber types.PhoneNumber) (user *models.User, err error)
 	GetUserByLogin(login string) (user *models.User, err error)
+	CountUsersBy(fieldName string, value interface{}) (count int64, err error)
+	CountUsersByLogin(login string) (count int64, err error)
+	CountUsersByPhoneNumber(phoneNumber types.PhoneNumber) (count int64, err error)
 }
 
 func (s *ServiceManager) CreateUser(login string, password string,
@@ -36,18 +39,20 @@ func (s *ServiceManager) CreateUser(login string, password string,
 	}
 
 	// Проверяем, существует ли юзер с таким логином
-	loginExists, err := s.GetUserByLogin(login)
-	if loginExists != nil {
+	usersWithLogin, err := s.CountUsersByLogin(login)
+	if err != nil || usersWithLogin > 0 {
 		log.Println("User with the given login already exists. Login: ", login)
-		return nil, err
+		log.Println("Error: ", err)
+		return nil, errors.LoginOccupiedError
 	}
 
 	// + доп. проверка на то, занят ли указанный номер телефона
 	if phoneNumber != "" {
-		phoneExists, err := s.GetUserByPhoneNumber(phoneNumber)
-		if phoneExists != nil {
+		usersWithPhN, err := s.CountUsersByPhoneNumber(phoneNumber)
+		if err != nil || usersWithPhN > 0 {
 			log.Println("User with the given phone number already exists. Phone number: ", phoneNumber)
-			return nil, err
+			log.Println("Error: ", err)
+			return nil, errors.PhoneNumberOccupiedError
 		}
 	}
 
@@ -57,32 +62,59 @@ func (s *ServiceManager) CreateUser(login string, password string,
 		Password:    passwordHash,
 		Name:        firstName,
 		LastName:    lastName,
-		MiddleMame:  middleName,
+		MiddleName:  middleName,
 		PhoneNumber: phoneNumber,
 	}
+
 	result := s.db.Create(user)
 	if result.Error != nil {
 		return nil, result.Error
 	}
+
 	return user, nil
 }
 
 func (s *ServiceManager) GetUserByLogin(login string) (user *models.User, err error) {
-	result := s.db.First(&user, "login = ?", login)
-	if result.Error != nil {
-		log.Println("Cannot get user by the given login. Error: ", result.Error)
-		return nil, errors.UserDoesNotExist
+	if err = s.db.First(&user, "login = ?", login).Error; err != nil {
+
+		if err == gorm.ErrRecordNotFound || user == nil {
+			return nil, errors.UserDoesNotExist
+		}
+
+		log.Println("Cannot get user by the given login. Error: ", err)
+		return nil, err
 	}
 	return user, nil
 }
 
 func (s *ServiceManager) GetUserByPhoneNumber(phoneNumber types.PhoneNumber) (user *models.User, err error) {
-	result := s.db.First(&user, "phone_number = ?", phoneNumber)
-	if result.Error != nil {
-		log.Println("Cannot get user by the given phone number. Error: ", result.Error)
-		return nil, errors.UserDoesNotExist
+	if err = s.db.First(&user, "phone_number = ?", phoneNumber).Error; err != nil {
+
+		if err == gorm.ErrRecordNotFound || user == nil {
+			return nil, errors.UserDoesNotExist
+		}
+
+		log.Println("Cannot get user by the given phone number. Error: ", err)
+		return nil, err
 	}
 	return user, nil
+}
+
+func (s *ServiceManager) CountUsersBy(fieldName string, value interface{}) (count int64, err error) {
+	if res := s.db.Table("users").Where(fieldName+" = ?", value).Count(&count); res.Error != nil {
+		return count, res.Error
+	}
+	return count, err
+}
+
+func (s *ServiceManager) CountUsersByLogin(login string) (count int64, err error) {
+	count, err = s.CountUsersBy("login", login)
+	return count, err
+}
+
+func (s *ServiceManager) CountUsersByPhoneNumber(phoneNumber types.PhoneNumber) (count int64, err error) {
+	count, err = s.CountUsersBy("phone_number", string(phoneNumber))
+	return count, err
 }
 
 //TODO
@@ -101,10 +133,11 @@ postman
 1. Create User (delete, get, update)
 	- add card (валидационные проверки)
 	-
-2. Login(Authorization) (login, password) bcrypt (access token - 15min)
-	- password hash
-3. Middleware
-JWT(access token 3 min, refresh token 15 - 20)
+[X] 2. Login(Authorization) (login, password) bcrypt (access token - 15min)
+[X]	- password hash
+
+[] 3. Middleware
+[] JWT(access token 3 min, refresh token 15 - 20)
 
 
 

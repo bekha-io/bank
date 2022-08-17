@@ -8,8 +8,8 @@ import (
 	"time"
 )
 
-const jwtSecret = "miniBankingApp"
-const jwtExpiresInMinutes = 15
+var jwtSecret = []byte("miniBankingApp")
+var jwtExpiresInMinutes time.Duration = 15
 
 func GenerateAccessToken(login string) (token string, err error) {
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, &types.Claims{
@@ -33,6 +33,7 @@ func ParseAccessToken(accessToken string) (string, error) {
 		}
 		return jwtSecret, nil
 	})
+
 	if err != nil {
 		return "", err
 	}

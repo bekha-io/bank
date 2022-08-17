@@ -7,7 +7,8 @@ import (
 )
 
 type Transaction struct {
-	gorm.Model
+	BaseModel
+	ID        uint                    `gorm:"primaryKey;" json:"id"`
 	AccountID string                  `gorm:"notNull;"`
 	Amount    types.Money             `gorm:"notNull;"`
 	Type      types.TransactionType   `gorm:"notNull;"`
