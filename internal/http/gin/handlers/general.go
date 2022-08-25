@@ -29,4 +29,5 @@ var DefaultResp = JSONResp{
 func SetupHandlers(r *gin.Engine) {
 	setupAuthHandlers(r)
 	setupAccountsHandlers(r)
+	setupCardsHandlers(r)
 }

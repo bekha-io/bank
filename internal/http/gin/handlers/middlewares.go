@@ -50,9 +50,11 @@ func TokenAuthMiddleware() gin.HandlerFunc {
 
 		if user.AccessToken != tokenString {
 			resp.Error = errors.InvalidAccessTokenError.Error()
-			c.AbortWithStatusJSON(http.StatusBadRequest, resp)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, resp)
 			return
 		}
+
+		c.Set("ctxLogin", user.Login)
 	}
 
 }

@@ -18,8 +18,8 @@ type User struct {
 	LastName    string            `gorm:"notNull" json:"lastName"`
 	MiddleName  string            `json:"middleName"`
 	PhoneNumber types.PhoneNumber `gorm:"unique;" json:"phoneNumber"`
-
-	AccessToken string `json:"-"`
+	Role        types.Role        `gorm:"default:0" json:"-"`
+	AccessToken string            `json:"-"`
 }
 
 func generateAccessToken(login string) (accessToken string) {
@@ -56,6 +56,19 @@ func (u *User) GetAccounts() []Account {
 	return accounts
 }
 
+func (u *User) GetCards() []Card {
+	var accounts = u.GetAccounts()
+	var cards []Card
+
+	for _, acc := range accounts {
+		for _, card := range acc.GetCards() {
+			cards = append(cards, card)
+		}
+	}
+
+	return cards
+}
+
 func (u *User) CheckPassword(passwordInput []byte) (ok bool) {
 	err := bcrypt.CompareHashAndPassword(u.Password, passwordInput)
 	if err != nil {
@@ -63,4 +76,16 @@ func (u *User) CheckPassword(passwordInput []byte) (ok bool) {
 		return false
 	}
 	return true
+}
+
+func (u *User) IsAdminRole() bool {
+	return u.Role == types.AdminRole
+}
+
+func (u *User) IsSupportRole() bool {
+	return u.Role == types.SupportRole
+}
+
+func (u *User) IsUserRole() bool {
+	return u.Role == types.UserRole
 }

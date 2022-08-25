@@ -13,6 +13,7 @@ import (
 type userService interface {
 	CreateUser(login string, password string, phoneNumber types.PhoneNumber, firstName string, lastName string,
 		middleName string) (user *models.User, err error)
+	GetUserById(userID string) (user *models.User, err error)
 	GetUserByPhoneNumber(phoneNumber types.PhoneNumber) (user *models.User, err error)
 	GetUserByLogin(login string) (user *models.User, err error)
 	CountUsersBy(fieldName string, value interface{}) (count int64, err error)
@@ -71,6 +72,19 @@ func (s *ServiceManager) CreateUser(login string, password string,
 		return nil, result.Error
 	}
 
+	return user, nil
+}
+
+func (s *ServiceManager) GetUserById(userID string) (user *models.User, err error) {
+	if err = s.db.First(&user, "id = ?", userID).Error; err != nil {
+
+		if err == gorm.ErrRecordNotFound || user == nil {
+			return nil, errors.UserDoesNotExist
+		}
+
+		log.Println("Cannot get user by the given id. Error: ", err)
+		return nil, err
+	}
 	return user, nil
 }
 

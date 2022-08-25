@@ -14,4 +14,6 @@ var (
 
 	ShouldBeBearerTokenError = errors.New("headers must contain a bearer token")
 	InvalidAccessToken       = errors.New("invalid access token")
+
+	NotEnoughRights = errors.New("action is forbidden by your role")
 )

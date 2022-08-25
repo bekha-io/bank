@@ -7,8 +7,8 @@ import (
 	"net/http"
 )
 
-func AllUserAccounts(c *gin.Context) {
-	var req reqModels.AllUserAccounts
+func AllUserCards(c *gin.Context) {
+	var req reqModels.AllUserCards
 	var resp = DefaultResp
 
 	if err := c.BindJSON(&req); err != nil {
@@ -49,69 +49,29 @@ func AllUserAccounts(c *gin.Context) {
 		}
 	}
 
-	accounts := user.GetAccounts()
+	cards := user.GetCards()
+	for i, _ := range cards {
+		cards[i].MaskSensitive()
+	}
 	resp.Status = RespStatusOK
-	resp.Body = accounts
+	resp.Body = cards
 	c.IndentedJSON(http.StatusOK, resp)
 }
 
-func UserAccount(c *gin.Context) {
-	var resp = DefaultResp
-
-	accountId := c.Param("id")
-
-	ctxLogin, exists := c.Get("ctxLogin")
-	if !exists {
-		resp.Error = errors.InvalidAccessTokenError.Error()
-		c.IndentedJSON(http.StatusBadRequest, resp)
-		return
-	}
-
-	// Context user (one that are making request)
-	ctxUser, err := service.GetUserByLogin(ctxLogin.(string))
-	if err != nil {
-		resp.Error = err.Error()
-		c.IndentedJSON(http.StatusNotFound, resp)
-		return
-	}
-
-	// Account that are being requested
-	account, err := service.GetAccountByID(accountId)
-	if err != nil {
-		resp.Error = err.Error()
-		c.IndentedJSON(http.StatusNotFound, resp)
-		return
-	}
-
-	// Проверка прав доступа
-	if account.UserID != ctxUser.ID {
-		if ctxUser.IsUserRole() {
-			resp.Error = errors.NotEnoughRights.Error()
-			c.IndentedJSON(http.StatusForbidden, resp)
-			return
-		}
-	}
-
-	resp.Status = RespStatusOK
-	resp.Body = account
-	c.IndentedJSON(http.StatusOK, resp)
-}
-
-func FreezeAccount(c *gin.Context) {
-
-}
-
-func UnfreezeAccount(c *gin.Context) {
-
-}
-
-func IssueAccount(c *gin.Context) {
-	var req reqModels.IssueAccount
+func IssueCard(c *gin.Context) {
+	var req reqModels.IssueCard
 	var resp = DefaultResp
 
 	if err := c.BindJSON(&req); err != nil {
 		resp.Error = err.Error()
 		c.IndentedJSON(http.StatusBadRequest, resp)
+		return
+	}
+
+	account, err := service.GetAccountByID(req.AccountID)
+	if err != nil {
+		resp.Error = err.Error()
+		c.IndentedJSON(http.StatusNotFound, resp)
 		return
 	}
 
@@ -131,7 +91,7 @@ func IssueAccount(c *gin.Context) {
 	}
 
 	// User that are being requested
-	user, err := service.GetUserByLogin(req.Login)
+	user, err := service.GetUserById(account.UserID)
 	if err != nil {
 		resp.Error = err.Error()
 		c.IndentedJSON(http.StatusNotFound, resp)
@@ -147,27 +107,23 @@ func IssueAccount(c *gin.Context) {
 		}
 	}
 
-	newAccount, err := service.IssueAccount(user.ID, req.Currency)
+	issuedCard, err := service.IssueCard(account.ID, req.CardSystem)
 	if err != nil {
 		resp.Error = err.Error()
 		c.IndentedJSON(http.StatusBadRequest, resp)
 		return
 	}
 
-	resp.Body = newAccount
+	resp.Body = issuedCard
 	resp.Status = RespStatusOK
 	c.IndentedJSON(http.StatusCreated, resp)
 	return
 }
 
-func setupAccountsHandlers(r *gin.Engine) {
-	g := r.Group("/")
+func setupCardsHandlers(r *gin.Engine) {
+	g := r.Group("")
 	g.Use(TokenAuthMiddleware())
 
-	g.GET("accounts", AllUserAccounts)
-	g.GET("accounts/:id", UserAccount)
-	g.POST("accounts/issue", IssueAccount)
-	g.POST("accounts/:id/freeze", FreezeAccount)
-	g.POST("accounts/:id/unfreeze", UnfreezeAccount)
-
+	g.GET("cards", AllUserCards)
+	g.POST("cards/issue", IssueCard)
 }

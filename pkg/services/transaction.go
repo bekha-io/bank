@@ -15,7 +15,10 @@ type transactionService interface {
 func (s *ServiceManager) makeTransactionRecord(accountID string, amount types.Money, transactionType types.TransactionType,
 	comment string) (ok bool) {
 
-	account := s.GetAccountByID(accountID)
+	account, err := s.GetAccountByID(accountID)
+	if err != nil {
+		return false
+	}
 
 	if account.ID != "" {
 		var tr = &models.Transaction{

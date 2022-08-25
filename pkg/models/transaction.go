@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// Transaction TODO: Is in development
 type Transaction struct {
 	BaseModel
 	ID        uint                    `gorm:"primaryKey;" json:"id"`

@@ -3,7 +3,6 @@ package services
 import (
 	"banking/pkg/models"
 	"banking/pkg/types"
-	"errors"
 	"log"
 )
 
@@ -12,9 +11,9 @@ type cardService interface {
 }
 
 func (s *ServiceManager) IssueCard(accountID string, cardSystem types.CardSystem) (card *models.Card, err error) {
-	account := s.GetAccountByID(accountID)
-	if account == nil {
-		return nil, errors.New("account with the given ID not found")
+	account, err := s.GetAccountByID(accountID)
+	if err != nil {
+		return nil, err
 	}
 
 	card = &models.Card{

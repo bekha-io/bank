@@ -11,10 +11,6 @@ type CreateUser struct {
 	PhoneNumber types.PhoneNumber `json:"phoneNumber" binding:"required"`
 }
 
-type MyAccounts struct {
-	Login string `json:"login" binding:"required"`
-}
-
 type RefreshToken struct {
 	Login    string `json:"login" binding:"required"`
 	Password string `json:"password" binding:"required"`

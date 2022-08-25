@@ -7,17 +7,27 @@ import (
 
 type Currency string
 
+func (c Currency) String() string {
+	return string(c)
+}
+
 var Digits = "0123456789"
 
 const (
 	TJS Currency = "TJS"
 	USD Currency = "USD"
 	RUB Currency = "RUB"
+	EUR Currency = "EUR"
+	BTC Currency = "BTC"
 )
+
+var AllowedCurrencies = []string{TJS.String(), USD.String(), RUB.String(), EUR.String(), BTC.String()}
 
 type Money int64
 
 type PAN string
+type PIN string
+type CV2 string
 
 type CardSystem string
 
