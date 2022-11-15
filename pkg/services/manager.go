@@ -6,17 +6,20 @@ import (
 )
 
 type ServiceManager struct {
-	Card        cardService
-	User        userService
-	Account     accountService
-	Transaction transactionService
-	Auth        authInterface
+	cardService
+	userService
+	accountService
+	transactionService
+	authInterface
+	paymentInterface
 
-	db *gorm.DB
+	DB *gorm.DB
 }
 
 func NewServiceManager() *ServiceManager {
+	db := models.ConnectDB()
+
 	return &ServiceManager{
-		db: models.Db,
+		DB: db,
 	}
 }

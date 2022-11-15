@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+</head>
+<style>
+    html {
+        font-family: "PT Sans", sans-serif;
+        background-color: #fe6949;
+    }
+
+    .container {
+        /*display: grid;*/
+        /*place-content: center;*/
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 90vh;
+        align-self: center;
+    }
+
+    .payment-panel {
+        padding: 15px;
+        text-align: center;
+        background-color: white;
+        color: black;
+        box-shadow: 2px 2px 2px 2px #302b27;
+        width: 50%;
+    }
+
+    footer {
+        text-align: center;
+        color: whitesmoke;
+        font-size: 12px;
+    }
+
+    form {
+        /*display: flex;*/
+        /*gap: 10px;*/
+        /*flex-direction: column;*/
+        /*align-content: space-between;*/
+        /*align-items: flex-start;*/
+        display: grid;
+        position: center;
+        row-gap: 10px;
+    }
+
+    input {
+        font-family: inherit;
+        /*margin-left: 15px;*/
+        /*margin-right: 15px;*/
+        border: none;
+        border-bottom: black 1px solid;
+        font-size: 22px;
+        /*text-align: center;*/
+        width: 70%;
+    }
+
+    .input-group {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 0;
+    }
+
+    .borderless {
+        border: none;
+    }
+
+    .input-group > label {
+        float: left;
+    }
+
+    input:focus {
+        outline: none;
+    }
+
+    .btn {
+        margin: auto;
+        max-width: 15rem;
+        padding: 7px;
+        background-color: #fe6949;
+        color: white;
+        border: none;
+        border-radius: 15px;
+        font-weight: bold;
+    }
+
+    .btn:hover {
+        opacity: 75%;
+        transition: 1s;
+    }
+
+    .btn-large {
+        padding: 7px;
+        font-size: 16px;
+    }
+
+    .m10 {
+        margin: 10px;
+    }
+
+    .my15 {
+        margin-top: 15px;
+        margin-bottom: 15px;
+    }
+
+    hr {
+        border: none;
+        border-bottom: 3px solid black;
+    }
+
+    .payment-info {
+        display: grid;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        /*display: flex;*/
+        /*flex-direction: row;*/
+        /*justify-content: space-between;*/
+        /*margin-top: 25px;*/
+        /*margin-bottom: 25px;*/
+    }
+
+    .payment-info > .payment-amount {
+        grid-column: 3;
+        font-size: 42px;
+        font-weight: bold;
+    }
+
+    .payment-info > .merchant-info {
+        grid-column: 1;
+        color: #444444;
+    }
+
+    .payment-info > .payment-desc {
+        grid-column: 2;
+        font-size: 12px;
+    }
+
+    .payment-title {
+        border-bottom: 1px black solid;
+        padding: 7px;
+    }
+
+    .desc {
+        text-align: left;
+        left: 15px;
+        position: relative;
+        top: 2px;
+        bottom: 0;
+        font-size: 12px;
+        color: #444444;
+    }
+
+    input::placeholder {
+        font-size: 10px;
+        text-align: left;
+        text-transform: none;
+    }
+
+    #payment-purpose {
+        display: inline;
+        overflow-wrap: break-word;
+    }
+
+    #payment-purpose::placeholder {
+        font-size: 16px;
+    }
+
+    #payment-id {
+        display: block;
+        font-size: 12px;
+        vertical-align: middle;
+        color: #444444;
+    }
+
+</style>
+<body>
+<div class="container">
+    <div class="payment-panel">
+        {{ if .payment.MerchantPaymentID }}
+        <h3 class="payment-title">Оплата счета #{{ .payment.MerchantPaymentID }}
+            <span id="payment-id">ID: {{.payment.ID}}</span>
+        </h3>
+        {{else}}
+        <h3 class="payment-title">Оплата счета {{ .payment.ID }}</h3>
+        {{end}}
+        <div class="payment-info">
+            <div class="merchant-info">{{ .merchantName }}</div>
+            <div class="payment-amount">{{ .amount }} {{ .payment.Currency }}</div>
+        </div>
+        <form method="post">
+            {{ if .payment.Purpose }}
+            <div class="input-group">
+                <label for="payment-purpose">Назначение</label>
+                <input class="borderless" id="payment-purpose" readonly
+                       placeholder="{{ .payment.Purpose }}"/>
+            </div>
+            {{else}}
+            {{end}}
+            <div class="input-group">
+                <label for="pan">PAN</label>
+                <input id="pan" pattern="[0-9]{16}"
+                       maxlength="16" name="pan"
+                       placeholder="Введите 16-значный PAN, указанный на лицевой стороне карты"
+                       required type="tel"/>
+            </div>
+            <div class="input-group">
+                <label for="expire-date">MM/YY</label>
+                <input id="expire-date" name="expire_date"
+                       placeholder="Введите срок истечения действия банковской карты в формате MM/YY"
+                       required pattern="[0-9]{2}/[0-9]{2}" maxlength="5" type="text"></div>
+            <div class="input-group">
+                <label for="cv2">CVV/CV2</label>
+                <input id="cv2" name="cv2" maxlength="3"
+                       placeholder="Введите 3-значный код CVV/CV2, указанный на обороте карты"
+                       required pattern="[0-9]{3}" type="text">
+            </div>
+            <div class="input-group">
+                <label for="owner">Cardholder Name</label>
+                <input id="owner" name="cardholder_name"
+                       placeholder="Введите ФИО владельца карты на латинице, как указано на лицевой стороне карты"
+                       oninput="this.value = this.value.toUpperCase()" style="text-transform:uppercase"
+                       maxlength="42" required type="text">
+            </div>
+            <input class="btn btn-large my15" type="submit" id="submit"
+                   value="Оплатить {{.amount}} {{.payment.Currency}}"/>
+        </form>
+    </div>
+</div>
+<footer>
+    <p>(R) Banking Application 2022. All rights reserved</p>
+</footer>
+</body>
+</html>

@@ -9,13 +9,14 @@ import (
 )
 
 type Account struct {
-	gorm.Model
-	ID       string         `gorm:"primaryKey;<-:create"`
-	UserID   string         `gorm:"<-:create"`
-	Currency types.Currency `gorm:"default:TJS"`
-	Balance  types.Money    `gorm:"default:0"`
+	BaseModel
+	ID     string `gorm:"primaryKey;<-:create" json:"id"`
+	UserID string `gorm:"<-:create" json:"owner_id"`
+	//MerchantID string         `gorm:"" json:"merchant_id"`
+	Currency types.Currency `gorm:"default:TJS" json:"currency"`
+	Balance  types.Money    `gorm:"default:0" json:"balance"`
 
-	IsFrozen bool `gorm:"default:false;"`
+	IsFrozen bool `gorm:"default:false;" json:"is_frozen"`
 }
 
 // Generates a random ID
@@ -36,8 +37,8 @@ func (a *Account) isValidOnCreate() (err error) {
 }
 
 func (a *Account) BeforeCreate(tx *gorm.DB) (err error) {
-	a.ID = generateAccountID()
 	err = a.isValidOnCreate()
+	a.ID = generateAccountID()
 	return
 }
 
