@@ -6,6 +6,5 @@ func Contains(s string, ss []string) bool {
 			return true
 		}
 	}
-
 	return false
 }

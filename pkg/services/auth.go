@@ -30,6 +30,6 @@ func (s *ServiceManager) RefreshAccessToken(login string, password []byte) (acce
 
 	// Here we return new access token and update user record in DB
 	user.AccessToken = accessToken
-	s.db.Save(&user)
+	s.DB.Save(&user)
 	return accessToken, nil
 }

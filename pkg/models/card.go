@@ -3,19 +3,25 @@ package models
 import (
 	"banking/pkg/types"
 	"gorm.io/gorm"
-	"log"
 	"math/rand"
 	"time"
 )
 
 type Card struct {
 	BaseModel
-	AccountID  string           `gorm:"notNull" json:"accountId"`
+	AccountID  string           `gorm:"notNull" json:"account_id"`
 	PAN        types.PAN        `gorm:"primaryKey;size:16;<-:create;notNull" json:"pan"`
-	CardSystem types.CardSystem `gorm:"notNull" json:"cardSystem"`
-	ExpireDate string           `gorm:"size:5;notNull" json:"expireDate"`
+	CardSystem types.CardSystem `gorm:"notNull" json:"card_system"`
+	ExpireDate types.ExpireDate `gorm:"size:5;notNull" json:"expire_date"`
 	PIN        types.PIN        `gorm:"size:4;notNull" json:"pin,omitempty"`
 	CV2        types.CV2        `gorm:"size:3;notNull;default:123" json:"cv2,omitempty"`
+}
+
+func (c Card) CompareWith(pan types.PAN, expireDate types.ExpireDate, cv2 types.CV2) (same bool) {
+	if c.PAN == pan && c.ExpireDate == expireDate && c.CV2 == cv2 {
+		return true
+	}
+	return false
 }
 
 func generatePAN() types.PAN {
@@ -46,10 +52,10 @@ func generateCV2() types.CV2 {
 	return types.CV2(b)
 }
 
-func generateExpireDate(years int) string {
+func generateExpireDate(years int) types.ExpireDate {
 	n := time.Now().AddDate(years, 0, 0)
 	dateAsString := n.Format("01/06")
-	return dateAsString
+	return types.ExpireDate(dateAsString)
 }
 
 func (c *Card) BeforeCreate(tx *gorm.DB) (err error) {
@@ -59,21 +65,13 @@ func (c *Card) BeforeCreate(tx *gorm.DB) (err error) {
 	c.ExpireDate = generateExpireDate(3)
 
 	if c.CardSystem == "" {
-		c.CardSystem = types.KortiMilli
+		c.CardSystem = types.MasterCard
 	}
 
 	return
 }
 
-func (c *Card) ExpireAsDate() time.Time {
-	t, err := time.Parse("01/06", c.ExpireDate)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return t
-}
-
-func (c *Card) MaskSensitive() {
+func (c *Card) Mask() {
 	c.PIN = ""
 	c.CV2 = ""
 }

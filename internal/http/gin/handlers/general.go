@@ -16,8 +16,8 @@ const (
 
 type JSONResp struct {
 	Status RespStatus  `json:"status"`
-	Error  string      `json:"error"`
-	Body   interface{} `json:"body"`
+	Error  string      `json:"error,omitempty"`
+	Body   interface{} `json:"body,omitempty"`
 }
 
 var DefaultResp = JSONResp{
@@ -30,4 +30,6 @@ func SetupHandlers(r *gin.Engine) {
 	setupAuthHandlers(r)
 	setupAccountsHandlers(r)
 	setupCardsHandlers(r)
+	setupTransactionsHandlers(r)
+	setupPaymentsHandlers(r)
 }

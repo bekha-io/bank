@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+type Masker interface {
+	Mask()
+}
+
 type BaseModel struct {
 	CreatedAt time.Time  `json:"-"`
 	UpdatedAt time.Time  `json:"-"`

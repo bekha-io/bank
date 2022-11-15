@@ -7,4 +7,6 @@ var (
 
 	TwoAccountsWithSameCurrency = errors.New("already have an account with this currency")
 	UnknownCurrency             = errors.New("currency is unknown. See list of available currencies")
+
+	InsufficientBalance = errors.New("insufficient balance in origin account")
 )

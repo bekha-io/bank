@@ -7,6 +7,6 @@ type AllUserCards struct {
 }
 
 type IssueCard struct {
-	AccountID  string           `json:"accountId" binding:"required"`
-	CardSystem types.CardSystem `json:"cardSystem"`
+	AccountID  string           `json:"account_id" binding:"required"`
+	CardSystem types.CardSystem `json:"card_system"`
 }

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+</head>
+<style>
+    html {
+        font-family: "PT Sans", sans-serif;
+        background-color: #fe6949;
+    }
+
+    .container {
+        /*display: grid;*/
+        /*place-content: center;*/
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 90vh;
+        align-self: center;
+    }
+
+    .payment-panel {
+        padding: 15px;
+        text-align: center;
+        background-color: white;
+        color: black;
+        box-shadow: 2px 2px 2px 2px #302b27;
+        width: 50%;
+    }
+
+    footer {
+        text-align: center;
+        color: whitesmoke;
+        font-size: 12px;
+    }
+
+    form {
+        /*display: flex;*/
+        /*gap: 10px;*/
+        /*flex-direction: column;*/
+        /*align-content: space-between;*/
+        /*align-items: flex-start;*/
+        display: grid;
+        position: center;
+        row-gap: 10px;
+    }
+
+    input {
+        font-family: inherit;
+        /*margin-left: 15px;*/
+        /*margin-right: 15px;*/
+        border: none;
+        border-bottom: black 1px solid;
+        font-size: 22px;
+        /*text-align: center;*/
+        width: 70%;
+    }
+
+    .input-group > label {
+        float: left;
+    }
+
+    input:focus {
+        outline: none;
+    }
+
+    hr {
+        border: none;
+        border-bottom: 3px solid black;
+    }
+
+    input::placeholder {
+        font-size: 10px;
+        text-align: left;
+        text-transform: none;
+    }
+
+</style>
+<body>
+<div class="container">
+    <div class="payment-panel">
+        <h2 style="font-size: 24px;font-weight: bold;color: {{ .color }}">{{ .message }}</h2>
+        {{ if .trn }}
+        <p>ID Транзакции: {{ .trn.ID }} </p>
+        {{ end }}
+    </div>
+</div>
+<footer>
+    <p>(R) Banking Application 2022. All rights reserved</p>
+</footer>
+</body>
+</html>

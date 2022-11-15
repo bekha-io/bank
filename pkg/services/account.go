@@ -39,7 +39,7 @@ func (s *ServiceManager) IssueAccount(userID string, currency types.Currency) (a
 		Balance:  0,
 	}
 
-	result := s.db.Create(account)
+	result := s.DB.Create(account)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -48,7 +48,7 @@ func (s *ServiceManager) IssueAccount(userID string, currency types.Currency) (a
 }
 
 func (s *ServiceManager) GetAccountByID(accountID string) (account *models.Account, err error) {
-	res := s.db.First(&account, "id = ?", accountID)
+	res := s.DB.First(&account, "id = ?", accountID)
 	if res.Error != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, errors.AccountNotFound
@@ -66,7 +66,7 @@ func (s *ServiceManager) FreezeAccount(accountID string) (ok bool) {
 	}
 
 	account.IsFrozen = true
-	s.db.Save(account)
+	s.DB.Save(account)
 	return true
 }
 
@@ -77,6 +77,6 @@ func (s *ServiceManager) UnfreezeAccount(accountID string) (ok bool) {
 		return false
 	}
 	account.IsFrozen = false
-	s.db.Save(account)
+	s.DB.Save(account)
 	return true
 }

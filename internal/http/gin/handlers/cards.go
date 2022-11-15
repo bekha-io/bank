@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"banking/internal/http/json/reqModels"
+	"banking/internal/http/reqModels"
 	"banking/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -51,7 +51,7 @@ func AllUserCards(c *gin.Context) {
 
 	cards := user.GetCards()
 	for i, _ := range cards {
-		cards[i].MaskSensitive()
+		cards[i].Mask()
 	}
 	resp.Status = RespStatusOK
 	resp.Body = cards

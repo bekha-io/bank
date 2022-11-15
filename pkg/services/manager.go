@@ -11,14 +11,15 @@ type ServiceManager struct {
 	accountService
 	transactionService
 	authInterface
+	paymentInterface
 
-	db *gorm.DB
+	DB *gorm.DB
 }
 
 func NewServiceManager() *ServiceManager {
 	db := models.ConnectDB()
 
 	return &ServiceManager{
-		db: db,
+		DB: db,
 	}
 }

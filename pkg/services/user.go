@@ -21,21 +21,41 @@ type userService interface {
 	CountUsersByPhoneNumber(phoneNumber types.PhoneNumber) (count int64, err error)
 }
 
-func (s *ServiceManager) CreateUser(login string, password string,
-	phoneNumber types.PhoneNumber, firstName string, lastName string,
-	middleName string) (user *models.User, err error) {
-
+func validateUserMandatoryFields(login, password string) error {
 	// Проверка на наличие всех обязательных (!) полей
-	if login == "" || password == "" || lastName == "" || firstName == "" {
-		return nil, fmt.Errorf("login, password, firstName, lastName are required fields and cannot be "+
-			"empty. Values provided: %v, %v, %v, %v", login, password, firstName, lastName)
+	if login == "" || password == "" {
+		return fmt.Errorf("login, password, firstName, lastName are required fields and cannot be "+
+			"empty. Values provided: %v, %v", login, password)
 	}
+	return nil
+}
 
+func generatePasswordHash(rawPassword string) ([]byte, error) {
 	// Генерация хэша из сырого пароля
-	passwordBytes := []byte(password)
-	passwordHash, err := bcrypt.GenerateFromPassword(passwordBytes, bcrypt.DefaultCost)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(rawPassword), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("cannot generate hash from password. Error: ", passwordHash)
+		return nil, err
+	}
+	return passwordHash, err
+}
+
+func (s *ServiceManager) CreateUserForLegalEntity(login, password string, phoneNumber types.PhoneNumber,
+	officialName string, taxIdNumber string) (user *models.User, err error) {
+
+	// Проверка на наличие обязательных аутентификационных (!) полей
+	if err = validateUserMandatoryFields(login, password); err != nil {
+		return nil, err
+	}
+
+	// Number should be in international format (without '+' sign)
+	if err = phoneNumber.Validate(); err != nil {
+		return nil, errors.InvalidPhoneNumberError
+	}
+
+	// Генерация хэша пароля
+	passwordHash, err := generatePasswordHash(password)
+	if err != nil {
 		return nil, err
 	}
 
@@ -48,26 +68,84 @@ func (s *ServiceManager) CreateUser(login string, password string,
 	}
 
 	// + доп. проверка на то, занят ли указанный номер телефона
-	if phoneNumber != "" {
-		usersWithPhN, err := s.CountUsersByPhoneNumber(phoneNumber)
-		if err != nil || usersWithPhN > 0 {
-			log.Println("User with the given phone number already exists. Phone number: ", phoneNumber)
-			log.Println("Error: ", err)
-			return nil, errors.PhoneNumberOccupiedError
-		}
+	usersWithPhN, err := s.CountUsersByPhoneNumber(phoneNumber)
+	if err != nil || usersWithPhN > 0 {
+		log.Println("User with the given phone number already exists. Phone number: ", phoneNumber)
+		log.Println("Error: ", err)
+		return nil, errors.PhoneNumberOccupiedError
 	}
+
+	var customerInfo = make(map[string]interface{})
+	customerInfo["official_name"] = officialName
+	customerInfo["tax_id_number"] = taxIdNumber
+
+	user = &models.User{
+		Login:        login,
+		Password:     passwordHash,
+		PhoneNumber:  phoneNumber,
+		CustomerInfo: customerInfo,
+		LegalStatus:  types.LegalEntityStatus,
+	}
+
+	result := s.DB.Create(user)
+	if result.Error != nil || result.RowsAffected == 0 {
+		return nil, result.Error
+	}
+
+	return user, nil
+}
+
+func (s *ServiceManager) CreateUser(login string, password string,
+	phoneNumber types.PhoneNumber, firstName string, lastName string,
+	middleName string) (user *models.User, err error) {
+
+	// Проверка на наличие обязательных аутентификационных (!) полей
+	if err = validateUserMandatoryFields(login, password); err != nil {
+		return nil, err
+	}
+
+	// Number should be in international format (without '+' sign)
+	if err = phoneNumber.Validate(); err != nil {
+		return nil, errors.InvalidPhoneNumberError
+	}
+
+	// Генерация хэша пароля
+	passwordHash, err := generatePasswordHash(password)
+	if err != nil {
+		return nil, err
+	}
+
+	// Проверяем, существует ли юзер с таким логином
+	usersWithLogin, err := s.CountUsersByLogin(login)
+	if err != nil || usersWithLogin > 0 {
+		log.Println("User with the given login already exists. Login: ", login)
+		log.Println("Error: ", err)
+		return nil, errors.LoginOccupiedError
+	}
+
+	// + доп. проверка на то, занят ли указанный номер телефона
+	usersWithPhN, err := s.CountUsersByPhoneNumber(phoneNumber)
+	if err != nil || usersWithPhN > 0 {
+		log.Println("User with the given phone number already exists. Phone number: ", phoneNumber)
+		log.Println("Error: ", err)
+		return nil, errors.PhoneNumberOccupiedError
+	}
+
+	var customerInfo = make(map[string]interface{})
+	customerInfo["first_name"] = firstName
+	customerInfo["last_name"] = lastName
+	customerInfo["middle_name"] = middleName
 
 	// Создание пользователя и сохранение записи в БД
 	user = &models.User{
-		Login:       login,
-		Password:    passwordHash,
-		Name:        firstName,
-		LastName:    lastName,
-		MiddleName:  middleName,
-		PhoneNumber: phoneNumber,
+		Login:        login,
+		Password:     passwordHash,
+		PhoneNumber:  phoneNumber,
+		CustomerInfo: customerInfo,
+		LegalStatus:  types.IndividualStatus,
 	}
 
-	result := s.db.Create(user)
+	result := s.DB.Create(user)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -76,7 +154,7 @@ func (s *ServiceManager) CreateUser(login string, password string,
 }
 
 func (s *ServiceManager) GetUserById(userID string) (user *models.User, err error) {
-	if err = s.db.First(&user, "id = ?", userID).Error; err != nil {
+	if err = s.DB.First(&user, "id = ?", userID).Error; err != nil {
 
 		if err == gorm.ErrRecordNotFound || user == nil {
 			return nil, errors.UserDoesNotExist
@@ -89,7 +167,7 @@ func (s *ServiceManager) GetUserById(userID string) (user *models.User, err erro
 }
 
 func (s *ServiceManager) GetUserByLogin(login string) (user *models.User, err error) {
-	if err = s.db.First(&user, "login = ?", login).Error; err != nil {
+	if err = s.DB.First(&user, "login = ?", login).Error; err != nil {
 
 		if err == gorm.ErrRecordNotFound || user == nil {
 			return nil, errors.UserDoesNotExist
@@ -102,7 +180,7 @@ func (s *ServiceManager) GetUserByLogin(login string) (user *models.User, err er
 }
 
 func (s *ServiceManager) GetUserByPhoneNumber(phoneNumber types.PhoneNumber) (user *models.User, err error) {
-	if err = s.db.First(&user, "phone_number = ?", phoneNumber).Error; err != nil {
+	if err = s.DB.First(&user, "phone_number = ?", phoneNumber).Error; err != nil {
 
 		if err == gorm.ErrRecordNotFound || user == nil {
 			return nil, errors.UserDoesNotExist
@@ -115,7 +193,7 @@ func (s *ServiceManager) GetUserByPhoneNumber(phoneNumber types.PhoneNumber) (us
 }
 
 func (s *ServiceManager) CountUsersBy(fieldName string, value interface{}) (count int64, err error) {
-	if res := s.db.Table("users").Where(fieldName+" = ?", value).Count(&count); res.Error != nil {
+	if res := s.DB.Table("users").Where(fieldName+" = ?", value).Count(&count); res.Error != nil {
 		return count, res.Error
 	}
 	return count, err

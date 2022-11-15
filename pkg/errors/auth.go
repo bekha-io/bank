@@ -16,4 +16,6 @@ var (
 	InvalidAccessToken       = errors.New("invalid access token")
 
 	NotEnoughRights = errors.New("action is forbidden by your role")
+
+	ShouldBeIndividualOrLegalEntity = errors.New("user should be either individual or legal entity")
 )
